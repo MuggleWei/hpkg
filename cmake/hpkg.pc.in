@@ -1,0 +1,9 @@
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: hpkg
+Description: hpkg
+Version: @HPKG_VERSION@
+URL: https://github.com/mugglewei/hpkg
+Libs: -L${libdir} -lhpkg
+Cflags: -I${includedir}
