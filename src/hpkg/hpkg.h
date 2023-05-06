@@ -17,5 +17,6 @@
 #include "hpkg/base/version.h"
 
 #include "hpkg/component/hpkg_cli_handle.h"
+#include "hpkg/component/settings.h"
 
 #endif // !HPKG_HPKG_H_

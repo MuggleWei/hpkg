@@ -1,0 +1,7 @@
+log:
+  console: info
+  file: debug
+local:
+  db: ~/.hpkg/hpkg.db
+  source: ~/.hpkg/sources
+  package: ~/.hpkg/packages

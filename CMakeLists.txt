@@ -47,8 +47,15 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 find_package(mugglec)
 if (NOT mugglec_FOUND)
-	message(FATAL_ERR "failed found mugglec")
+	message(FATAL_ERR "Failed found mugglec")
 endif()
+message("Found mugglec: ${mugglec_DIR}")
+
+find_package(yaml)
+if (NOT yaml_FOUND)
+	message(FATAL_ERR "Failed found yaml")
+endif()
+message("Found yaml: ${yaml_DIR}")
 
 ################################
 # hpkg
@@ -92,6 +99,7 @@ target_include_directories(hpkg PUBLIC
 	$<BUILD_INTERFACE:${hpkg_src_dir}>
 	$<BUILD_INTERFACE:${hpkg_gen_dir}>
 	$<INSTALL_INTERFACE:include>)
+target_link_libraries(hpkg mugglec yaml)
 
 target_compile_definitions(hpkg PRIVATE HPKG_EXPORTS)
 set_target_properties(hpkg PROPERTIES
