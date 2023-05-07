@@ -11,7 +11,13 @@
 #include "version.h"
 #include <stdlib.h>
 #include <string.h>
-#include <threads.h>
+
+// threads.h not support in vs2019, vs2022!!!
+#if _WIN32
+	#include "muggle/c/sync/call_once.h"
+#else
+	#include <threads.h>
+#endif
 
 const char *hpkg_version()
 {
@@ -64,9 +70,18 @@ static void init_compile_datetime_once()
 	memcpy(&s_compile_dt_buf[11], &compile_time[12], 8);
 }
 
-static once_flag flag = ONCE_FLAG_INIT;
+#if _WIN32
+	static muggle_once_flag flag = MUGGLE_ONCE_FLAG_INIT;
+#else
+	static once_flag flag = ONCE_FLAG_INIT;
+#endif
+
 const char *hpkg_compile_datetime_iso8601()
 {
+#if _WIN32
+	muggle_call_once(&flag, init_compile_datetime_once);
+#else
 	call_once(&flag, init_compile_datetime_once);
+#endif
 	return s_compile_dt_buf;
 }
