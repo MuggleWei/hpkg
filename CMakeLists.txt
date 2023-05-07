@@ -151,6 +151,8 @@ install(DIRECTORY "${hpkg_src_dir}/hpkg" "${hpkg_gen_dir}/hpkg"
 	FILES_MATCHING
 	PATTERN "*.h"
 	PATTERN "*.hpp")
+install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/etc/"
+	DESTINATION "${CMAKE_INSTALL_SYSCONFDIR}/hpkg")
 
 # cmake package config
 set(hpkg_export_dir "${CMAKE_INSTALL_LIBDIR}/cmake/hpkg")

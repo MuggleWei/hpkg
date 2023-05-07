@@ -10,7 +10,10 @@ else
 	BUILD_TYPE=$(echo $1 | tr '[:upper:]' '[:lower:]')
 fi
 
+build_shared_libs=ON
+
 echo "Build Type: $BUILD_TYPE"
+echo "Build Shared libs: $build_shared_libs"
 
 # directories
 origin_dir="$(dirname "$(readlink -f "$0")")"
@@ -65,7 +68,7 @@ cmake \
 	-S $libyaml_src_dir \
 	-B $libyaml_build_dir \
 	-DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-	-DBUILD_SHARED_LIBS=ON \
+	-DBUILD_SHARED_LIBS=$build_shared_libs \
 	-DCMAKE_INSTALL_PREFIX=$dep_pkg_dir \
 	-DBUILD_TESTING=OFF
 
@@ -85,7 +88,7 @@ cmake \
 	-S $mugglec_src_dir \
 	-B $mugglec_build_dir \
 	-DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-	-DBUILD_SHARED_LIBS=ON \
+	-DBUILD_SHARED_LIBS=$build_shared_libs \
 	-DCMAKE_INSTALL_PREFIX=$dep_pkg_dir \
 	-DBUILD_TESTING=OFF
 
@@ -101,6 +104,6 @@ cmake \
 	-S $origin_dir \
 	-B $build_dir \
 	-DCMAKE_BUILD_TYPE=$BUILD_TYPE \
-	-DBUILD_SHARED_LIBS=ON \
+	-DBUILD_SHARED_LIBS=$build_shared_libs \
 	-DCMAKE_PREFIX_PATH=$dep_pkg_dir \
 	-DCMAKE_INSTALL_PREFIX=$output_dir
