@@ -139,6 +139,25 @@ else()
 	endif()
 endif()
 
+# win debug
+if (WIN32)
+	foreach(subdir ${CMAKE_PREFIX_PATH})
+		file(GLOB dll_files "${subdir}/bin/*.dll")
+		foreach(src_file ${dll_files})
+			file(RELATIVE_PATH rel_path ${src_file} ${subdir}/bin)
+			get_filename_component(dst_name ${src_file} NAME)
+			set(dst_file "$(OutDir)${dst_name}")
+			add_custom_command(
+				TARGET hpkgcli
+				POST_BUILD
+				COMMAND ${CMAKE_COMMAND} -E copy_if_different "${src_file}" ${dst_file}
+				DEPENDS "${src_file}"
+				COMMENT "sync ${src_file} to ${dst_file}"
+			)
+		endforeach(src_file ${dll_files})
+	endforeach(subdir ${CMAKE_PREFIX_PATH})
+endif()
+
 # install
 include(GNUInstallDirs)
 install(TARGETS hpkg hpkgcli
