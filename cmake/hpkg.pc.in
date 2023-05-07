@@ -2,7 +2,7 @@ libdir=@CMAKE_INSTALL_FULL_LIBDIR@
 includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
 
 Name: hpkg
-Description: hpkg
+Description: Happy Package. A c/c++ package manager.
 Version: @HPKG_VERSION@
 URL: https://github.com/mugglewei/hpkg
 Libs: -L${libdir} -lhpkgcli

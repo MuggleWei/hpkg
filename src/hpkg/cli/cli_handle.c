@@ -10,6 +10,7 @@
 
 #include "cli_handle.h"
 #include "hpkg/cli/base/version.h"
+#include "hpkg/cli/component/settings.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,6 +43,12 @@ int hpkg_cli_run(int argc, char **argv)
 				"hpkg (Happy Package)\nVersion: %s\nCompile Datetime: %s\n",
 				hpkg_version(), hpkg_compile_datetime_iso8601());
 		exit(EXIT_SUCCESS);
+	}
+
+	struct hpkg_settings *p_settings = hpkg_settings_instance();
+	if (!hpkg_settings_load_default(p_settings)) {
+		fprintf(stderr, "Failed load settings");
+		exit(EXIT_FAILURE);
 	}
 
 	return 0;
