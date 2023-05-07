@@ -8,8 +8,8 @@
  *  @brief        
  *****************************************************************************/
 
-#include "hpkg_cli_handle.h"
-#include "hpkg/base/version.h"
+#include "cli_handle.h"
+#include "hpkg/cli/base/version.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

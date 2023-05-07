@@ -8,11 +8,11 @@
  *  @brief        
  *****************************************************************************/
 
-#ifndef HPKG_COMPONENT_SETTINGS_H_
-#define HPKG_COMPONENT_SETTINGS_H_
+#ifndef HPKG_CLI_COMPONENT_SETTINGS_H_
+#define HPKG_CLI_COMPONENT_SETTINGS_H_
 
 #include <stdint.h>
-#include "hpkg/base/macro.h"
+#include "hpkg/cli/base/macro.h"
 
 HPKG_EXTERN_C_BEGIN
 
@@ -29,7 +29,7 @@ struct hpkg_settings {
  *
  * @return 
  */
-HPKG_EXPORT
+HPKG_CLI_EXPORT
 struct hpkg_settings *hpkg_settings_instance();
 
 /**
@@ -42,7 +42,7 @@ struct hpkg_settings *hpkg_settings_instance();
  *     - on success returns nonzero
  *     - on failed returns zero
  */
-HPKG_EXPORT
+HPKG_CLI_EXPORT
 int hpkg_settings_load(struct hpkg_settings *instance, const char *filepath);
 
 /**
@@ -54,9 +54,9 @@ int hpkg_settings_load(struct hpkg_settings *instance, const char *filepath);
  *     - on success returns nonzero
  *     - on failed returns zero
  */
-HPKG_EXPORT
+HPKG_CLI_EXPORT
 int hpkg_settings_load_default(struct hpkg_settings *instance);
 
 HPKG_EXTERN_C_END
 
-#endif // !HPKG_COMPONENT_SETTINGS_H_
+#endif // !HPKG_CLI_COMPONENT_SETTINGS_H_

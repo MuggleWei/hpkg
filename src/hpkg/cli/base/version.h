@@ -1,5 +1,5 @@
 /******************************************************************************
- *  @file         hpkg_handle.h
+ *  @file         version.h
  *  @author       Muggle Wei
  *  @email        mugglewei@gmail.com
  *  @date         2023-05-06
@@ -8,24 +8,22 @@
  *  @brief        
  *****************************************************************************/
 
-#ifndef HPKG_COMPONENT_HPKG_CLI_HANDLE_H_
-#define HPKG_COMPONENT_HPKG_CLI_HANDLE_H_
+#ifndef HPKG_CLI_BASE_VERSION_H_
+#define HPKG_CLI_BASE_VERSION_H_
 
-#include "hpkg/base/macro.h"
+#include "hpkg/cli/base/macro.h"
 
 HPKG_EXTERN_C_BEGIN
 
-/**
- * @brief run happy package
- *
- * @param argc
- * @param argv
- *
- * @return 
- */
-HPKG_EXPORT
-int hpkg_cli_run(int argc, char **argv);
+HPKG_CLI_EXPORT
+const char *hpkg_version();
+
+HPKG_CLI_EXPORT
+const char *hpkg_compile_datetime();
+
+HPKG_CLI_EXPORT
+const char *hpkg_compile_datetime_iso8601();
 
 HPKG_EXTERN_C_END
 
-#endif // !HPKG_COMPONENT_HPKG_HANDLE_H_
+#endif // !HPKG_CLI_BASE_VERSION_H_

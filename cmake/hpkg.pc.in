@@ -5,5 +5,5 @@ Name: hpkg
 Description: hpkg
 Version: @HPKG_VERSION@
 URL: https://github.com/mugglewei/hpkg
-Libs: -L${libdir} -lhpkg
+Libs: -L${libdir} -lhpkgcli
 Cflags: -I${includedir}

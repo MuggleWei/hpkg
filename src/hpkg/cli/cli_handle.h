@@ -1,5 +1,5 @@
 /******************************************************************************
- *  @file         hpkg.h
+ *  @file         hpkg_handle.h
  *  @author       Muggle Wei
  *  @email        mugglewei@gmail.com
  *  @date         2023-05-06
@@ -8,15 +8,24 @@
  *  @brief        
  *****************************************************************************/
 
-#ifndef HPKG_HPKG_H_
-#define HPKG_HPKG_H_
+#ifndef HPKG_CLI_CLI_HANDLE_H_
+#define HPKG_CLI_CLI_HANDLE_H_
 
-#include "hpkg/config.h"
+#include "hpkg/cli/base/macro.h"
 
-#include "hpkg/base/macro.h"
-#include "hpkg/base/version.h"
+HPKG_EXTERN_C_BEGIN
 
-#include "hpkg/component/hpkg_cli_handle.h"
-#include "hpkg/component/settings.h"
+/**
+ * @brief run happy package
+ *
+ * @param argc
+ * @param argv
+ *
+ * @return 
+ */
+HPKG_CLI_EXPORT
+int hpkg_cli_run(int argc, char **argv);
 
-#endif // !HPKG_HPKG_H_
+HPKG_EXTERN_C_END
+
+#endif // !HPKG_CLI_CLI_HANDLE_H_

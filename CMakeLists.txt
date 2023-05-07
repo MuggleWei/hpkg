@@ -86,54 +86,54 @@ endif()
 configure_file(
 	${hpkg_src_dir}/hpkg/config.h.in
 	${hpkg_gen_dir}/hpkg/config.h)
-
-# add library
-FILE(GLOB_RECURSE hpkg_src_c "${hpkg_src_dir}/hpkg/*.c")
-FILE(GLOB_RECURSE hpkg_src_h "${hpkg_src_dir}/hpkg/*.h")
 FILE(GLOB_RECURSE hpkg_gen_h "${hpkg_gen_dir}/hpkg/*.h")
-add_library(hpkg ${HPKG_LIB_TYPE}
-	${hpkg_src_c}
-	${hpkg_src_h}
+
+# cli
+FILE(GLOB_RECURSE hpkg_cli_src_c "${hpkg_src_dir}/hpkg/cli/*.c")
+FILE(GLOB_RECURSE hpkg_cli_src_h "${hpkg_src_dir}/hpkg/cli/*.h")
+add_library(hpkgcli ${HPKG_LIB_TYPE}
+	${hpkg_cli_src_c}
+	${hpkg_cli_src_h}
 	${hpkg_gen_h})
+target_include_directories(hpkgcli PUBLIC 
+	$<BUILD_INTERFACE:${hpkg_src_dir}>
+	$<BUILD_INTERFACE:${hpkg_gen_dir}>
+	$<INSTALL_INTERFACE:include>)
+target_link_libraries(hpkgcli mugglec yaml)
+
+target_compile_definitions(hpkgcli PRIVATE HPKG_CLI_EXPORTS)
+set_target_properties(hpkgcli PROPERTIES
+	LINKER_LANGUAGE C
+	DEBUG_POSTFIX d
+	VERSION ${HPKG_VERSION}
+	SOVERSION ${HPKG_VERSION_MAJOR})
+
+# cli exe
+FILE(GLOB_RECURSE hpkg_cliexe_src_c "${hpkg_src_dir}/hpkg/cliexe/*.c")
+add_executable(hpkg ${hpkg_cliexe_src_c})
 target_include_directories(hpkg PUBLIC 
 	$<BUILD_INTERFACE:${hpkg_src_dir}>
 	$<BUILD_INTERFACE:${hpkg_gen_dir}>
 	$<INSTALL_INTERFACE:include>)
-target_link_libraries(hpkg mugglec yaml)
+target_link_libraries(hpkg hpkgcli)
 
-target_compile_definitions(hpkg PRIVATE HPKG_EXPORTS)
 set_target_properties(hpkg PROPERTIES
 	LINKER_LANGUAGE C
 	DEBUG_POSTFIX d
 	VERSION ${HPKG_VERSION}
 	SOVERSION ${HPKG_VERSION_MAJOR})
 
-# add cli
-add_executable(hpkg_cli ${CMAKE_CURRENT_LIST_DIR}/src/hpkg_cli/main.c)
-target_link_libraries(hpkg_cli hpkg)
-target_include_directories(hpkg_cli PUBLIC 
-	$<BUILD_INTERFACE:${hpkg_src_dir}>
-	$<BUILD_INTERFACE:${hpkg_gen_dir}>
-	$<INSTALL_INTERFACE:include>)
-
-set_target_properties(hpkg_cli PROPERTIES
-	OUTPUT_NAME hpkg
-	LINKER_LANGUAGE C
-	DEBUG_POSTFIX d
-	VERSION ${HPKG_VERSION}
-	SOVERSION ${HPKG_VERSION_MAJOR})
-
 if (MSVC OR MINGW)
-	set_target_properties(hpkg_cli
+	set_target_properties(hpkg
 		PROPERTIES
 		VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)")
 else()
 	if (APPLE)
-		set_target_properties(hpkg_cli
+		set_target_properties(hpkg
 			PROPERTIES
 			INSTALL_RPATH "@executable_path/../lib")
 	elseif (UNIX)
-		set_target_properties(hpkg_cli
+		set_target_properties(hpkg
 			PROPERTIES
 			INSTALL_RPATH "\$ORIGIN/../lib")
 	endif()
@@ -141,7 +141,7 @@ endif()
 
 # install
 include(GNUInstallDirs)
-install(TARGETS hpkg hpkg_cli
+install(TARGETS hpkg hpkgcli
 	EXPORT hpkgTargets
 	RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
 	ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -213,56 +213,8 @@ function(sync_dir name src_dir dst_dir)
 	add_custom_target(${name} ALL DEPENDS ${dst_files})
 endfunction()
 
-function(add_example name folder)
-	message("add example ${name} ${folder}")
-	
-	set(name example_${name})
-
-	file(GLOB_RECURSE tmp_h ${folder}/*.h)
-	file(GLOB_RECURSE tmp_c ${folder}/*.c)
-	file(GLOB_RECURSE tmp_cpp ${folder}/*.cpp)
-	file(GLOB_RECURSE tmp_cc ${folder}/*.cc)
-
-	if (MSVC OR MINGW)
-		add_executable(${name} ${tmp_h} ${tmp_c} ${tmp_cpp} ${tmp_cc})
-		set_target_properties(${name}
-			PROPERTIES
-			FOLDER "example"
-			VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
-		)
-	else()
-		add_executable(${name} ${tmp_c} ${tmp_cpp} ${tmp_cc})
-		if (APPLE)
-			set_target_properties(${name}
-				PROPERTIES
-				INSTALL_RPATH "@executable_path/../lib"
-			)
-		elseif (UNIX)
-			set_target_properties(${name}
-				PROPERTIES
-				INSTALL_RPATH "\$ORIGIN/../lib"
-			)
-		endif()
-	endif()
-	target_compile_definitions(${name} PUBLIC MUGGLE_HOLD_LOG_MACRO)
-	target_include_directories(${name} PUBLIC ${folder} ${LIBXML2_INCLUDE_DIR})
-	target_link_libraries(${name} mugglec yaml)
-endfunction()
-
 ################################
 # sync resources
 ################################
 
 sync_dir(COPY_RES ${CMAKE_CURRENT_LIST_DIR}/etc ${CMAKE_BINARY_DIR}/etc)
-
-################################
-# examples
-################################
-
-set(example_root_dir ${CMAKE_CURRENT_LIST_DIR}/example)
-FILE(GLOB subdirs RELATIVE ${example_root_dir} ${example_root_dir}/*)
-FOREACH(subdir ${subdirs})
-	IF(IS_DIRECTORY ${example_root_dir}/${subdir})
-		add_example(${subdir} ${example_root_dir}/${subdir})
-	ENDIF()
-ENDFOREACH()
