@@ -5,7 +5,7 @@ libyaml_repo="https://github.com/yaml/libyaml.git"
 libyaml_ver="0.2.5"
 
 mugglec_repo="https://github.com/MuggleWei/mugglec.git"
-mugglec_ver="v1.1.0"
+mugglec_ver="v1.2.0"
 
 # directories
 origin_dir="$(dirname "$(readlink -f "$0")")"
