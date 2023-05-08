@@ -42,6 +42,20 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 ################################
+# show inputs
+################################
+
+# CMAKE_PREFIX_PATH
+foreach(path ${CMAKE_PREFIX_PATH})
+	message("# CMake Prefix Path: ${path}")
+endforeach()
+
+# build flags
+message("# BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
+message("# BUILD_TESTING: ${BUILD_TESTING}")
+message("# BUILD_COVERAGE: ${BUILD_COVERAGE}")
+
+################################
 # deps
 ################################
 
@@ -49,13 +63,18 @@ find_package(mugglec)
 if (NOT mugglec_FOUND)
 	message(FATAL_ERR "Failed found mugglec")
 endif()
-message("Found mugglec: ${mugglec_DIR}")
+message("# Found mugglec: ${mugglec_DIR}")
 
 find_package(yaml)
 if (NOT yaml_FOUND)
 	message(FATAL_ERR "Failed found yaml")
 endif()
-message("Found yaml: ${yaml_DIR}")
+message("# Found yaml: ${yaml_DIR}")
+
+find_package(unity)
+if (unity_FOUND)
+	message("# Found Unity Test: ${unity_DIR}")
+endif()
 
 ################################
 # hpkg
@@ -232,8 +251,122 @@ function(sync_dir name src_dir dst_dir)
 	add_custom_target(${name} ALL DEPENDS ${dst_files})
 endfunction()
 
+function(add_unittest name folder)
+	message("add test ${name} ${folder}")
+
+	file(GLOB tmp_h ${folder}/*.h)
+	file(GLOB tmp_c ${folder}/*.c)
+	file(GLOB tmp_cpp ${folder}/*.cpp)
+	file(GLOB tmp_cc ${folder}/*.cc)
+
+	if (MSVC OR MINGW)
+		add_executable(${name} ${tmp_h} ${tmp_c} ${tmp_cpp} ${tmp_cc})
+		set_target_properties(${name}
+			PROPERTIES
+			FOLDER "test"
+			VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
+		)
+	else()
+		add_executable(${name} ${tmp_c} ${tmp_cpp} ${tmp_cc})
+		if (APPLE)
+			set_target_properties(${name}
+				PROPERTIES
+				INSTALL_RPATH "@executable_path/../lib"
+			)
+		elseif (UNIX)
+			set_target_properties(${name}
+				PROPERTIES
+				INSTALL_RPATH "\$ORIGIN/../lib"
+			)
+		endif(APPLE)
+	endif(MSVC OR MINGW)
+	add_dependencies(${name} hpkgcli)
+	target_include_directories(${name} PUBLIC
+		${hpkg_src_dir}
+		${hpkg_gen_dir})
+	target_link_libraries(${name} hpkgcli unity::framework)
+
+	add_test(NAME ${name} COMMAND ${name})
+endfunction()
+
 ################################
 # sync resources
 ################################
 
 sync_dir(COPY_RES ${CMAKE_CURRENT_LIST_DIR}/etc ${CMAKE_BINARY_DIR}/etc)
+
+################################
+# tests
+################################
+if (BUILD_TESTING)
+	if (NOT unity_FOUND)
+		message(FATAL_ERROR "Failed found Unity Test")
+	endif()
+
+	enable_testing()
+
+	set(test_root_dir ${CMAKE_CURRENT_LIST_DIR}/tests)
+	FILE(GLOB subdirs RELATIVE ${test_root_dir} ${test_root_dir}/*)
+	FOREACH(subdir ${subdirs})
+		IF(IS_DIRECTORY ${test_root_dir}/${subdir})
+			add_unittest(${subdir} ${test_root_dir}/${subdir})
+		ENDIF()
+	ENDFOREACH()
+endif()
+
+################################
+# coverage
+################################
+
+if (BUILD_COVERAGE)
+	if (${CMAKE_C_COMPILER_ID} MATCHES Clang)
+		set(COVERAGE_COMPILER_FLAGS "-fprofile-instr-generate -fcoverage-mapping")
+
+		find_program(LLVM_PROFDATA llvm-profdata)
+		find_program(LLVM_COV_PATH llvm-cov)
+		if (LLVM_PROFDATA AND LLVM_COV_PATH)
+			set(COV_OUT_NAME hpkgcli_coverage)
+			add_custom_target(
+				coverage
+				COMMAND echo "run converage"
+				COMMAND rm -rf ${COV_OUT_NAME}
+				COMMAND rm -rf hpkgcli-*profraw
+				COMMAND rm -rf hpkgcli.profdata
+				COMMAND LLVM_PROFILE_FILE=hpkgcli-%m.profraw make test
+				COMMAND ${LLVM_PROFDATA} merge hpkgcli-*.profraw -o hpkgcli.profdata
+				COMMAND ${LLVM_COV_PATH} report ./lib/libhpkgcli.* -instr-profile=hpkgcli.profdata
+				COMMAND ${LLVM_COV_PATH} show ./lib/libhpkgcli.* -instr-profile=hpkgcli.profdata -output-dir=${COV_OUT_NAME} -format=html
+				)
+		else()
+			message(SEND_ERROR "failed generate coverage report, llvm-profdata or llvm-cov not found")
+		endif()
+	elseif(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
+		set(COVERAGE_COMPILER_FLAGS "--coverage")
+
+		find_program(LCOV_PATH lcov)
+		find_program(GENHTML_PATH genhtml)
+		if (LCOV_PATH AND GENHTML_PATH)
+			set(COV_OUT_NAME hpkgcli_coverage)
+			set(COV_DIR ./CMakeFiles/hpkgcli.dir)
+			add_custom_target(
+				coverage
+				COMMAND echo "run converage"
+				COMMAND rm -rf ${COV_OUT_NAME}.info ${COV_OUT_NAME}
+				COMMAND ${LCOV_PATH} --zerocounters -d ${COV_DIR}
+				COMMAND rm -rf ${COV_OUT_NAME} ${COV_OUT_NAME}.info
+				COMMAND make test
+				COMMAND ${LCOV_PATH} -d ${COV_DIR} -c -o ${COV_OUT_NAME}.info
+				COMMAND ${GENHTML_PATH} ${COV_OUT_NAME}.info -o ${COV_OUT_NAME}
+				)
+		else()
+			message(SEND_ERROR "failed generate coverage report, lcov or genhtml not found")
+		endif()
+	else()
+		message("Failed add coverage flags")
+		set(COVERAGE_COMPILER_FLAGS "")
+	endif()
+
+	message("add coverage flags: ${COVERAGE_COMPILER_FLAGS}")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COVERAGE_COMPILER_FLAGS}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COVERAGE_COMPILER_FLAGS}")
+endif()

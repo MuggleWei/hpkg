@@ -12,6 +12,7 @@
 #define HPKG_CLI_COMPONENT_SETTINGS_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "hpkg/cli/base/macro.h"
 
 HPKG_EXTERN_C_BEGIN
@@ -33,29 +34,25 @@ HPKG_CLI_EXPORT
 struct hpkg_settings *hpkg_settings_instance();
 
 /**
+ * @brief load settings from default filepaths
+ *
+ * @param instance
+ *
+ * @return boolean
+ */
+HPKG_CLI_EXPORT
+bool hpkg_settings_load_default(struct hpkg_settings *instance);
+
+/**
  * @brief load settings file
  *
  * @param instance
  * @param filepath
  *
- * @return
- *     - on success returns nonzero
- *     - on failed returns zero
+ * @return boolean
  */
 HPKG_CLI_EXPORT
-int hpkg_settings_load(struct hpkg_settings *instance, const char *filepath);
-
-/**
- * @brief load settings from default filepaths
- *
- * @param instance
- *
- * @return
- *     - on success returns nonzero
- *     - on failed returns zero
- */
-HPKG_CLI_EXPORT
-int hpkg_settings_load_default(struct hpkg_settings *instance);
+bool hpkg_settings_load(struct hpkg_settings *instance, const char *filepath);
 
 HPKG_EXTERN_C_END
 

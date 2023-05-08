@@ -17,6 +17,30 @@
 HPKG_EXTERN_C_BEGIN
 
 /**
+ * @brief get home directory
+ *
+ * @param buf
+ * @param bufsize
+ *
+ * @return
+ *     - on success, return home directory
+ *     - on failed, return NULL
+ */
+HPKG_CLI_EXPORT
+const char *hpkg_path_home(char *buf, size_t bufsize);
+
+/**
+ * @brief get current executable's directory
+ *
+ * @param buf
+ * @param bufsize
+ *
+ * @return 
+ */
+HPKG_CLI_EXPORT
+const char *hpkg_path_process_dir(char *buf, size_t bufsize);
+
+/**
  * @brief expand path to absolute path
  * e.g.
  *   when user home is /home/mugglewei, then

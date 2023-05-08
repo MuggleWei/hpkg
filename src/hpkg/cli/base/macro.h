@@ -24,4 +24,21 @@
 	#define HPKG_CLI_EXPORT
 #endif
 
+// extern c
+#ifdef __cplusplus
+	#ifndef HPKG_EXTERN_C_BEGIN
+		#define HPKG_EXTERN_C_BEGIN extern "C" {
+	#endif
+	#ifndef HPKG_EXTERN_C_END
+		#define HPKG_EXTERN_C_END }
+	#endif
+#else
+	#ifndef HPKG_EXTERN_C_BEGIN
+		#define HPKG_EXTERN_C_BEGIN
+	#endif
+	#ifndef HPKG_EXTERN_C_END
+		#define HPKG_EXTERN_C_END
+	#endif
+#endif
+
 #endif // !HPKG_CLI_BASE_MACRO_H_

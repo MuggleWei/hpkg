@@ -7,6 +7,13 @@ libyaml_ver="0.2.5"
 mugglec_repo="https://github.com/MuggleWei/mugglec.git"
 mugglec_ver="v1.2.0"
 
+unitytest_repo="https://github.com/ThrowTheSwitch/Unity.git"
+unitytest_ver="v2.5.2"
+
+dep_array=(
+	"libyaml" "mugglec" "unitytest"
+)
+
 # directories
 origin_dir="$(dirname "$(readlink -f "$0")")"
 build_dir=$origin_dir/build
@@ -25,23 +32,22 @@ fi
 mkdir -p $tmp_dep_dir
 cd $tmp_dep_dir
 
-git clone --branch $libyaml_ver --depth 1 $libyaml_repo libyaml
-status=$?
-if [ $status -eq 0 ]; then
-	echo "Success download libyaml"
-else
-	echo "Failed download libyaml"
-	exit 1
-fi
-
-git clone --branch $mugglec_ver --depth 1 $mugglec_repo mugglec
-status=$?
-if [ $status -eq 0 ]; then
-	echo "Success download mugglec"
-else
-	echo "Failed download mugglec"
-	exit 1
-fi
+for dep in ${dep_array[@]}; do
+	repo_name="${dep}_repo"
+	ver_name="${dep}_ver"
+	repo="${!repo_name}"
+	ver="${!ver_name}"
+	
+	echo "git clone --branch $ver --depth 1 $repo $dep"
+	git clone --branch $ver --depth 1 $repo $dep
+	status=$?
+	if [ $status -eq 0 ]; then
+		echo "Success download $dep"
+	else
+		echo "Failed download $dep"
+		exit 1
+	fi
+done
 
 # move tmp deps to deps
 cd $origin

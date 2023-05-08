@@ -9,54 +9,32 @@
  *****************************************************************************/
 
 #include "settings.h"
-#include "hpkg/cli/utils/path.h"
 #include <stdio.h>
+#include "hpkg/cli/utils/path.h"
+#include "muggle/c/base/macro.h"
+#include "muggle/c/os/os.h"
 #include "muggle/c/os/path.h"
 #include "yaml.h"
 
-/**
- * @brief parse settings file
- *
- * @param instance
- * @param filepath
- *
- * @return
- *     - on success returns nonzero
- *     - on failed returns zero
- */
-static int hpkg_settings_parse_file(struct hpkg_settings *instance,
-									const char *filepath);
+static const char *hpkg_settings_rel_etc(char *buf, size_t bufsize)
+{
+	char exedir[MUGGLE_MAX_PATH];
+	if (hpkg_path_process_dir(exedir, sizeof(exedir)) == NULL) {
+		return NULL;
+	}
 
-/**
- * @brief parse settings
- *
- * @param instance
- * @param p_parser
- *
- * @return 
- *     - on success returns nonzero
- *     - on failed returns zero
- */
-static int hpkg_settings_run_parse(struct hpkg_settings *instance,
-								   yaml_parser_t *p_parser);
+	char relbuf[MUGGLE_MAX_PATH];
+	const char *relpath = "../etc/hpkg/settings.yml";
+	if (muggle_path_join(exedir, relpath, relbuf, sizeof(relbuf)) != 0) {
+		return NULL;
+	}
 
-/**
- * @brief prototype of parse settings
- *
- * @param instance
- * @param p_event
- */
-typedef void (*hpkg_settings_parse_func)(struct hpkg_settings *instance,
-										 yaml_event_t *p_event);
+	if (muggle_path_abspath(buf, buf, sizeof(bufsize)) != 0) {
+		return NULL;
+	}
 
-/**
- * @brief parse settings root
- *
- * @param instance
- * @param p_event
- */
-static void hpkg_settings_parse_root(struct hpkg_settings *instance,
-									 yaml_event_t *p_event);
+	return buf;
+}
 
 struct hpkg_settings *hpkg_settings_instance()
 {
@@ -64,17 +42,7 @@ struct hpkg_settings *hpkg_settings_instance()
 	return &instance;
 }
 
-int hpkg_settings_load(struct hpkg_settings *instance, const char *filepath)
-{
-	if (!muggle_path_exists(filepath)) {
-		fprintf(stderr, "filepath not exists: %s\n", filepath);
-		return 0;
-	}
-
-	return hpkg_settings_parse_file(instance, filepath);
-}
-
-int hpkg_settings_load_default(struct hpkg_settings *instance)
+bool hpkg_settings_load_default(struct hpkg_settings *instance)
 {
 	const char *candidates[] = {
 		"~/.hpkg/settings.yml",
@@ -83,7 +51,7 @@ int hpkg_settings_load_default(struct hpkg_settings *instance)
 		"/usr/etc/hpkg/settings.yml",
 	};
 
-	int ret = 0;
+	int ret = false;
 	for (size_t i = 0; i < sizeof(candidates) / sizeof(candidates[0]); i++) {
 		char buf[MUGGLE_MAX_PATH];
 		const char *filepath =
@@ -92,81 +60,44 @@ int hpkg_settings_load_default(struct hpkg_settings *instance)
 			continue;
 		}
 
+		if (!muggle_path_exists(filepath)) {
+			continue;
+		}
+
 		if (hpkg_settings_load(instance, filepath)) {
-			ret = 1;
-			fprintf(stdout, "Load settings in %s\n", candidates[i]);
+			ret = true;
+			fprintf(stdout, "Load settings in %s\n", filepath);
 			break;
+		}
+	}
+
+	if (!ret) {
+		char buf[MUGGLE_MAX_PATH];
+		const char *filepath = hpkg_settings_rel_etc(buf, sizeof(buf));
+		if (filepath == NULL) {
+			return false;
+		}
+
+		if (!muggle_path_exists(filepath)) {
+			return false;
+		}
+
+		ret = hpkg_settings_load(instance, filepath);
+		if (ret) {
+			fprintf(stdout, "Load settings in %s\n", filepath);
 		}
 	}
 
 	return ret;
 }
 
-int hpkg_settings_parse_file(struct hpkg_settings *instance,
-							 const char *filepath)
+bool hpkg_settings_load(struct hpkg_settings *instance, const char *filepath)
 {
-	int ret = 0;
-
-	yaml_parser_t parser;
-	FILE *fp = NULL;
-
-	if (!yaml_parser_initialize(&parser)) {
-		fprintf(stderr, "Failed initialize yaml parser");
+	if (!muggle_path_exists(filepath)) {
+		fprintf(stderr, "filepath not exists: %s\n", filepath);
 		return 0;
 	}
 
-	fp = fopen(filepath, "rb");
-	if (fp == NULL) {
-		fprintf(stderr, "Failed open file: %s", filepath);
-		goto parse_exit;
-	}
-
-	yaml_parser_set_input_file(&parser, fp);
-
-	ret = hpkg_settings_run_parse(instance, &parser);
-
-parse_exit:
-	yaml_parser_delete(&parser);
-
-	if (fp) {
-		fclose(fp);
-		fp = NULL;
-	}
-
-	return ret;
-}
-
-int hpkg_settings_run_parse(struct hpkg_settings *instance,
-							yaml_parser_t *p_parser)
-{
-	memset(instance, 0, sizeof(*instance));
-
-	hpkg_settings_parse_func func = hpkg_settings_parse_root;
-
-	yaml_event_t event;
-	int done = 0;
-	while (!done) {
-		if (!yaml_parser_parse(p_parser, &event)) {
-			break;
-		}
-
-		func(instance, &event);
-
-		done = (event.type == YAML_STREAM_END_EVENT);
-		yaml_event_delete(&event);
-	}
-
-	return 0;
-}
-
-void hpkg_settings_parse_root(struct hpkg_settings *instance,
-							  yaml_event_t *p_event)
-{
-	switch (p_event->type) {
-	case YAML_SCALAR_EVENT: {
-		fprintf(stdout, "%s\n", p_event->data.scalar.value);
-	} break;
-	default: {
-	} break;
-	}
+	// TODO: parse yaml file to dict object
+	return false;
 }
