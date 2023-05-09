@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.0.2)
+cmake_minimum_required (VERSION 3.18.6)
 project(hpkg)
 
 ################################
@@ -107,6 +107,26 @@ configure_file(
 	${hpkg_gen_dir}/hpkg/config.h)
 FILE(GLOB_RECURSE hpkg_gen_h "${hpkg_gen_dir}/hpkg/*.h")
 
+# object
+FILE(GLOB_RECURSE hpkg_object_src_c "${hpkg_src_dir}/hpkg/object/*.c")
+FILE(GLOB_RECURSE hpkg_object_src_h "${hpkg_src_dir}/hpkg/object/*.h")
+add_library(hpkgobj ${HPKG_LIB_TYPE}
+	${hpkg_object_src_c}
+	${hpkg_object_src_h}
+	${hpkg_gen_h})
+target_include_directories(hpkgobj PUBLIC
+	$<BUILD_INTERFACE:${hpkg_src_dir}>
+	$<BUILD_INTERFACE:${hpkg_gen_dir}>
+	$<INSTALL_INTERFACE:include>)
+
+target_compile_definitions(hpkgobj PRIVATE HPKG_OBJ_EXPORTS)
+set_target_properties(hpkgobj PROPERTIES
+	LINKER_LANGUAGE C
+	DEBUG_POSTFIX d
+	VERSION ${HPKG_VERSION}
+	SOVERSION ${HPKG_VERSION_MAJOR})
+target_link_libraries(hpkgobj mugglec)
+
 # cli
 FILE(GLOB_RECURSE hpkg_cli_src_c "${hpkg_src_dir}/hpkg/cli/*.c")
 FILE(GLOB_RECURSE hpkg_cli_src_h "${hpkg_src_dir}/hpkg/cli/*.h")
@@ -114,11 +134,11 @@ add_library(hpkgcli ${HPKG_LIB_TYPE}
 	${hpkg_cli_src_c}
 	${hpkg_cli_src_h}
 	${hpkg_gen_h})
-target_include_directories(hpkgcli PUBLIC 
+target_include_directories(hpkgcli PUBLIC
 	$<BUILD_INTERFACE:${hpkg_src_dir}>
 	$<BUILD_INTERFACE:${hpkg_gen_dir}>
 	$<INSTALL_INTERFACE:include>)
-target_link_libraries(hpkgcli mugglec yaml)
+target_link_libraries(hpkgcli hpkgobj mugglec yaml)
 
 target_compile_definitions(hpkgcli PRIVATE HPKG_CLI_EXPORTS)
 set_target_properties(hpkgcli PROPERTIES
@@ -130,7 +150,7 @@ set_target_properties(hpkgcli PROPERTIES
 # cli exe
 FILE(GLOB_RECURSE hpkg_cliexe_src_c "${hpkg_src_dir}/hpkg/cliexe/*.c")
 add_executable(hpkg ${hpkg_cliexe_src_c})
-target_include_directories(hpkg PUBLIC 
+target_include_directories(hpkg PUBLIC
 	$<BUILD_INTERFACE:${hpkg_src_dir}>
 	$<BUILD_INTERFACE:${hpkg_gen_dir}>
 	$<INSTALL_INTERFACE:include>)
@@ -179,7 +199,7 @@ endif()
 
 # install
 include(GNUInstallDirs)
-install(TARGETS hpkg hpkgcli
+install(TARGETS hpkg hpkgcli hpkgobj
 	EXPORT hpkgTargets
 	RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
 	ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
