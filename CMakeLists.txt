@@ -61,7 +61,7 @@ message("# BUILD_COVERAGE: ${BUILD_COVERAGE}")
 
 find_package(mugglec)
 if (NOT mugglec_FOUND)
-	message(FATAL_ERR "Failed found mugglec")
+	message(FATAL_ERROR "Failed found mugglec")
 endif()
 message("# Found mugglec: ${mugglec_DIR}")
 
