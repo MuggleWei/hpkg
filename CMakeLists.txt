@@ -136,6 +136,12 @@ set_target_properties(hpkgobj PROPERTIES
 	SOVERSION ${HPKG_VERSION_MAJOR})
 target_link_libraries(hpkgobj mugglec)
 
+if (UNIX)
+	set_target_properties(hpkgobj
+		PROPERTIES
+		INSTALL_RPATH "\$ORIGIN")
+endif()
+
 # cli
 FILE(GLOB_RECURSE hpkg_cli_src_c "${hpkg_src_dir}/hpkg/cli/*.c")
 FILE(GLOB_RECURSE hpkg_cli_src_h "${hpkg_src_dir}/hpkg/cli/*.h")
@@ -155,6 +161,12 @@ set_target_properties(hpkgcli PROPERTIES
 	DEBUG_POSTFIX d
 	VERSION ${HPKG_VERSION}
 	SOVERSION ${HPKG_VERSION_MAJOR})
+
+if (UNIX)
+	set_target_properties(hpkgcli
+		PROPERTIES
+		INSTALL_RPATH "\$ORIGIN")
+endif()
 
 # cli exe
 FILE(GLOB_RECURSE hpkg_cliexe_src_c "${hpkg_src_dir}/hpkg/cliexe/*.c")
@@ -290,24 +302,8 @@ function(add_unittest name folder)
 
 	if (MSVC OR MINGW)
 		add_executable(${name} ${tmp_h} ${tmp_c} ${tmp_cpp} ${tmp_cc})
-		set_target_properties(${name}
-			PROPERTIES
-			FOLDER "test"
-			VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
-		)
 	else()
 		add_executable(${name} ${tmp_c} ${tmp_cpp} ${tmp_cc})
-		if (APPLE)
-			set_target_properties(${name}
-				PROPERTIES
-				INSTALL_RPATH "@executable_path/../lib"
-			)
-		elseif (UNIX)
-			set_target_properties(${name}
-				PROPERTIES
-				INSTALL_RPATH "\$ORIGIN/../lib"
-			)
-		endif(APPLE)
 	endif(MSVC OR MINGW)
 	add_dependencies(${name} hpkgcli)
 	target_include_directories(${name} PUBLIC
