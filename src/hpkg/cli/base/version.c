@@ -11,7 +11,13 @@
 #include "version.h"
 #include <stdlib.h>
 #include <string.h>
-#include <threads.h>
+
+// threads.h not support in vs2019, vs2022!!!
+#if _WIN32 || !HPKG_HAVE_THREADS
+	#include "muggle/c/sync/call_once.h"
+#else
+	#include <threads.h>
+#endif
 
 const char *hpkg_version()
 {
@@ -26,7 +32,7 @@ const char *hpkg_compile_datetime()
 static char s_compile_dt_buf[32];
 static void init_compile_datetime_once()
 {
-	memset((void*)s_compile_dt_buf, 0, sizeof(s_compile_dt_buf));
+	memset((void *)s_compile_dt_buf, 0, sizeof(s_compile_dt_buf));
 	const char *compile_time = hpkg_compile_datetime();
 
 	// year
@@ -37,23 +43,26 @@ static void init_compile_datetime_once()
 	s_compile_dt_buf[4] = '-';
 
 	// First month letter, Oct Nov Dec = '1' otherwise '0'
-	s_compile_dt_buf[5] = (compile_time[0] == 'O' || compile_time[0] == 'N' || compile_time[0] == 'D') ? '1' : '0';
+	s_compile_dt_buf[5] = (compile_time[0] == 'O' || compile_time[0] == 'N' ||
+						   compile_time[0] == 'D') ?
+							  '1' :
+							  '0';
 	// Second month letter
 	s_compile_dt_buf[6] =
-		(compile_time[0] == 'J') ? ( (compile_time[1] == 'a') ? '1' :       // Jan, Jun or Jul
+		(compile_time[0] == 'J') ? ( (compile_time[1] == 'a') ? '1' : // Jan, Jun or Jul
 				((compile_time[2] == 'n') ? '6' : '7') ) :
-		(compile_time[0] == 'F') ? '2' :                                // Feb 
-		(compile_time[0] == 'M') ? (compile_time[2] == 'r') ? '3' : '5' :   // Mar or May
-		(compile_time[0] == 'A') ? (compile_time[1] == 'p') ? '4' : '8' :   // Apr or Aug
-		(compile_time[0] == 'S') ? '9' :                                // Sep
-		(compile_time[0] == 'O') ? '0' :                                // Oct
-		(compile_time[0] == 'N') ? '1' :                                // Nov
-		(compile_time[0] == 'D') ? '2' :                                // Dec
+		(compile_time[0] == 'F') ? '2' : // Feb 
+		(compile_time[0] == 'M') ? (compile_time[2] == 'r') ? '3' : '5' : // Mar or May
+		(compile_time[0] == 'A') ? (compile_time[1] == 'p') ? '4' : '8' : // Apr or Aug
+		(compile_time[0] == 'S') ? '9' : // Sep
+		(compile_time[0] == 'O') ? '0' : // Oct
+		(compile_time[0] == 'N') ? '1' : // Nov
+		(compile_time[0] == 'D') ? '2' : // Dec
 		0;
 	s_compile_dt_buf[7] = '-';
 
 	// First day letter, replace space with digit
-	s_compile_dt_buf[8] = compile_time[4]==' ' ? '0' : compile_time[4];
+	s_compile_dt_buf[8] = compile_time[4] == ' ' ? '0' : compile_time[4];
 	// Second day letter
 	s_compile_dt_buf[9] = compile_time[5];
 	s_compile_dt_buf[10] = 'T';
@@ -61,9 +70,18 @@ static void init_compile_datetime_once()
 	memcpy(&s_compile_dt_buf[11], &compile_time[12], 8);
 }
 
-static once_flag flag = ONCE_FLAG_INIT;
+#if _WIN32 || !HPKG_HAVE_THREADS
+	static muggle_once_flag flag = MUGGLE_ONCE_FLAG_INIT;
+#else
+	static once_flag flag = ONCE_FLAG_INIT;
+#endif
+
 const char *hpkg_compile_datetime_iso8601()
 {
+#if _WIN32 || !HPKG_HAVE_THREADS
+	muggle_call_once(&flag, init_compile_datetime_once);
+#else
 	call_once(&flag, init_compile_datetime_once);
+#endif
 	return s_compile_dt_buf;
 }

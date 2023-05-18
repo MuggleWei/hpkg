@@ -43,7 +43,7 @@ if [ -d $pkg_dir ]; then
 fi
 
 $origin_dir/bootstrap.sh $BUILD_TYPE
-cmake --build $build_dir --target install
+cmake --build $build_dir --config $BUILD_TYPE --target install
 
 mkdir -p $pkg_dir
 mkdir -p $pkg_dir/bin
