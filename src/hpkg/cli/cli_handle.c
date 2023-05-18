@@ -47,9 +47,11 @@ int hpkg_cli_run(int argc, char **argv)
 
 	struct hpkg_settings *p_settings = hpkg_settings_instance();
 	if (!hpkg_settings_load_default(p_settings)) {
-		fprintf(stderr, "Failed load settings");
+		fprintf(stderr, "Failed load settings\n");
 		exit(EXIT_FAILURE);
 	}
+
+	// TODO:
 
 	return 0;
 }

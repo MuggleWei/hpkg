@@ -77,10 +77,9 @@ if (unity_FOUND)
 endif()
 
 ################################
-# hpkg
+# version
 ################################
 
-# version
 file(STRINGS "version.txt" hpkg_version)
 string(REPLACE "-" ";" hpkg_semver_ext ${hpkg_version})
 list(GET hpkg_semver_ext 0 hpkg_semver)
@@ -91,7 +90,10 @@ list(GET hpkg_semver_list 1 HPKG_VERSION_MINOR)
 list(GET hpkg_semver_list 2 HPKG_VERSION_PATCH)
 set(HPKG_VERSION "${HPKG_VERSION_MAJOR}.${HPKG_VERSION_MINOR}.${HPKG_VERSION_PATCH}")
 
+################################
 # configure
+################################
+
 set(hpkg_src_dir ${CMAKE_CURRENT_LIST_DIR}/src)
 set(hpkg_gen_dir ${CMAKE_CURRENT_BINARY_DIR}/generated)
 if (BUILD_SHARED_LIBS)
@@ -102,10 +104,17 @@ else()
 	set(HPKG_LIB_TYPE STATIC)
 endif()
 
+include(CheckIncludeFile)
+check_include_file(threads.h HPKG_HAVE_THREADS)
+
 configure_file(
 	${hpkg_src_dir}/hpkg/config.h.in
 	${hpkg_gen_dir}/hpkg/config.h)
 FILE(GLOB_RECURSE hpkg_gen_h "${hpkg_gen_dir}/hpkg/*.h")
+
+################################
+# hpkg
+################################
 
 # object
 FILE(GLOB_RECURSE hpkg_object_src_c "${hpkg_src_dir}/hpkg/object/*.c")

@@ -5,7 +5,7 @@ libyaml_repo="https://github.com/yaml/libyaml.git"
 libyaml_ver="0.2.5"
 
 mugglec_repo="https://github.com/MuggleWei/mugglec.git"
-mugglec_ver="v1.2.2"
+mugglec_ver="v1.2.4"
 
 unitytest_repo="https://github.com/ThrowTheSwitch/Unity.git"
 unitytest_ver="v2.5.2"
