@@ -332,7 +332,8 @@ if (BUILD_TESTING)
 		message(FATAL_ERROR "Failed found Unity Test")
 	endif()
 
-	enable_testing()
+	#enable_testing()
+	include(CTest)
 
 	set(test_root_dir ${CMAKE_CURRENT_LIST_DIR}/tests)
 	FILE(GLOB subdirs RELATIVE ${test_root_dir} ${test_root_dir}/*)

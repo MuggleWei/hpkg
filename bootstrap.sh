@@ -142,3 +142,16 @@ cmake \
 	-DCMAKE_INSTALL_PREFIX=$output_dir \
 	-DBUILD_TESTING=$build_testing \
 	-DBUILD_COVERAGE=$build_coverage
+
+if [ "$build_testing" = "ON" ]; then
+	cd $build_dir
+	cmake --build $build_dir --config $BUILD_TYPE
+	if ! valgrind ls &> /dev/null; then
+		ctest
+	else
+		ctest \
+			-DCTEST_MEMORYCHECK_COMMAND=valgrind \
+			-DMemoryCheckCommand=valgrind \
+			-T memcheck
+	fi
+fi
