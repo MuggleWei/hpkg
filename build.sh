@@ -34,7 +34,7 @@ origin_dir="$(dirname "$(readlink -f "$0")")"
 build_dir=$origin_dir/build
 dep_pkg_dir=$build_dir/_hpkg/deps
 output_dir=$build_dir/_hpkg/output
-pkg_dir=$origin_dir/_package
+pkg_dir=$origin_dir/dist
 
 cd $origin_dir
 

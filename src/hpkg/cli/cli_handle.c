@@ -10,6 +10,7 @@
 
 #include "cli_handle.h"
 #include "hpkg/cli/base/version.h"
+#include "hpkg/cli/command/build.h"
 #include "hpkg/cli/component/settings.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,13 +46,20 @@ int hpkg_cli_run(int argc, char **argv)
 		exit(EXIT_SUCCESS);
 	}
 
-	struct hpkg_settings *p_settings = hpkg_settings_instance();
-	if (!hpkg_settings_load_default(p_settings)) {
-		fprintf(stderr, "Failed load settings\n");
-		exit(EXIT_FAILURE);
-	}
+	// struct hpkg_settings *p_settings = hpkg_settings_instance();
+	// if (!hpkg_settings_load_default(p_settings)) {
+	//     fprintf(stderr, "Failed load settings\n");
+	//     exit(EXIT_FAILURE);
+	// }
 
 	// TODO:
+	if (strcmp(argv[1], "build") == 0) {
+		return hpkg_cli_run_build(argc - 1, argv + 1);
+	} else {
+		// TODO:
+		fprintf(stderr, "sub command '%s' not implement yet", argv[1]);
+		return 1;
+	}
 
 	return 0;
 }
