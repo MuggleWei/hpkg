@@ -11,7 +11,7 @@ remove_dirs=(
 	"$dist_dir"
 )
 for d in ${remove_dirs[@]}; do
-	echo $d
+	echo "clean $d"
 	if [ -d $d ]; then
 		rm -rf $d
 	fi

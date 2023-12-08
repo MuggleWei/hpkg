@@ -2,93 +2,32 @@ cmake_minimum_required (VERSION 3.18.6)
 project(hpkg)
 
 ################################
-# general config
+# prepares
 ################################
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/hpkg_utils.cmake)
 
-message("-- use c compiler ${CMAKE_C_COMPILER}")
-message("-- use c++ compiler ${CMAKE_CXX_COMPILER}")
-
-# set compile parameter
-if (${CMAKE_C_COMPILER_ID} STREQUAL GNU)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native -Wall -Wextra")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wall -Wextra")
-elseif (${CMAKE_C_COMPILER_ID} MATCHES Clang)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=native -Wall -Wextra -Wno-missing-field-initializers")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -Wall -Wextra -Wno-missing-field-initializers")
-elseif (${CMAKE_C_COMPILER_ID} STREQUAL MSVC)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS=1 -D_UNICODE -DUNICODE)
-endif()
-
-# set standard and print features
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-
-message("-- c compiler support features: ")
-foreach(feature ${CMAKE_C_COMPILE_FEATURES})
-	message("support feature: ${feature}")
-endforeach()
-
-# for vim plugin - YCM
-if (NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
-	set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-endif()
-
-# set output directory
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-# set use folder in vs
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+get_version("version.txt" HPKG_VERSION HPKG_VERSION_MAJOR HPKG_VERSION_MINOR HPKG_VERSION_PATCH)
 
 ################################
-# show inputs
+# output options
 ################################
-
-# CMAKE_PREFIX_PATH
+message("--------------------------------")
+message("# version: ${HPKG_VERSION}")
+message("# so version: ${HPKG_VERSION_MAJOR}")
+message("# c compiler ${CMAKE_C_COMPILER}")
+message("# c compiler flags: ${CMAKE_C_FLAGS}")
+message("# cxx compiler ${CMAKE_CXX_COMPILER}")
+message("# cxx compiler flags: ${CMAKE_CXX_FLAGS}")
+message("# install prefix: ${CMAKE_INSTALL_PREFIX}")
 foreach(path ${CMAKE_PREFIX_PATH})
-	message("# CMake Prefix Path: ${path}")
+	message("# deps search prefix: ${path}")
 endforeach()
-
-# build flags
+message("# CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message("# BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
 message("# BUILD_TESTING: ${BUILD_TESTING}")
+message("# BUILD_SANITIZER: ${BUILD_SANITIZER}")
 message("# BUILD_COVERAGE: ${BUILD_COVERAGE}")
-
-################################
-# deps
-################################
-
-find_package(mugglec)
-if (NOT mugglec_FOUND)
-	message(FATAL_ERROR "Failed found mugglec")
-endif()
-message("# Found mugglec: ${mugglec_DIR}")
-
-find_package(yaml)
-if (NOT yaml_FOUND)
-	message(FATAL_ERR "Failed found yaml")
-endif()
-message("# Found yaml: ${yaml_DIR}")
-
-find_package(unity)
-if (unity_FOUND)
-	message("# Found Unity Test: ${unity_DIR}")
-endif()
-
-################################
-# version
-################################
-
-file(STRINGS "version.txt" hpkg_version)
-string(REPLACE "-" ";" hpkg_semver_ext ${hpkg_version})
-list(GET hpkg_semver_ext 0 hpkg_semver)
-string(REPLACE "." ";" hpkg_semver_list ${hpkg_semver})
-
-list(GET hpkg_semver_list 0 HPKG_VERSION_MAJOR)
-list(GET hpkg_semver_list 1 HPKG_VERSION_MINOR)
-list(GET hpkg_semver_list 2 HPKG_VERSION_PATCH)
-set(HPKG_VERSION "${HPKG_VERSION_MAJOR}.${HPKG_VERSION_MINOR}.${HPKG_VERSION_PATCH}")
+message("--------------------------------")
 
 ################################
 # configure
@@ -220,6 +159,10 @@ endif()
 
 # install
 include(GNUInstallDirs)
+
+# force set install libdir to "lib", avoid of being set to "lib64" in some situation
+set(CMAKE_INSTALL_LIBDIR "lib")
+
 install(TARGETS hpkg hpkgcli hpkgobj
 	EXPORT hpkgTargets
 	RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
@@ -275,22 +218,6 @@ include(CPack)
 ################################
 # functions
 ################################
-
-function(sync_dir name src_dir dst_dir)
-	file(GLOB_RECURSE src_files "${src_dir}/*")
-	foreach(src_file ${src_files})
-		file(RELATIVE_PATH rel_path ${src_dir} ${src_file})
-		set(dst_file "${dst_dir}/${rel_path}")
-		add_custom_command(
-			OUTPUT "${dst_file}"
-			COMMAND ${CMAKE_COMMAND} -E copy_if_different "${src_file}" ${dst_file}
-			DEPENDS "${src_file}"
-			COMMENT "copy ${src_file} to ${dst_file}"
-		)
-		list(APPEND dst_files "${dst_file}")
-	endforeach()
-	add_custom_target(${name} ALL DEPENDS ${dst_files})
-endfunction()
 
 function(add_unittest name folder)
 	message("add test ${name} ${folder}")

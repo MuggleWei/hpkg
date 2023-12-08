@@ -35,8 +35,8 @@ for dep in ${dep_array[@]}; do
 
 	if [ -d $dep ]; then
 		cd $dep
-		git checkout $ver
-		if [ $? -eq 0 ]; then
+		curr_ver=$(git describe --tags)
+		if [ "${curr_ver}" == "${ver}" ]; then
 			echo "$dep tags/$ver already exists"
 			continue
 		else
@@ -56,3 +56,9 @@ for dep in ${dep_array[@]}; do
 		exit 1
 	fi
 done
+
+# update libyaml cmake mini version
+cd $deps_dir
+sed -i \
+	's/cmake_minimum_required(VERSION 3.0)/cmake_minimum_required(VERSION 3.18.6)/g' \
+	libyaml/CMakeLists.txt
