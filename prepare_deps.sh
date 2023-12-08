@@ -5,7 +5,7 @@ libyaml_repo="https://github.com/yaml/libyaml.git"
 libyaml_ver="0.2.5"
 
 mugglec_repo="https://github.com/MuggleWei/mugglec.git"
-mugglec_ver="v1.2.4"
+mugglec_ver="v1.4.4"
 
 unitytest_repo="https://github.com/ThrowTheSwitch/Unity.git"
 unitytest_ver="v2.5.2"
@@ -17,39 +17,42 @@ dep_array=(
 # directories
 origin_dir="$(dirname "$(readlink -f "$0")")"
 build_dir=$origin_dir/build
-tmp_dep_dir=$build_dir/_download_deps
-dep_dir=$origin_dir/_deps
+deps_dir=$origin_dir/_deps
 
-if [ -d $dep_dir ]; then
-	echo "Dependencies source directory already exists: $dep_dir"
-	exit 0
+if [ ! -d $deps_dir ]; then
+	mkdir -p $deps_dir
 fi
-
-# create tmp dependencies source directory
-if [ -d $tmp_dep_dir ]; then
-	rm -rf $tmp_dep_dir
-fi
-mkdir -p $tmp_dep_dir
-cd $tmp_dep_dir
+cd $deps_dir
 
 for dep in ${dep_array[@]}; do
 	repo_name="${dep}_repo"
 	ver_name="${dep}_ver"
 	repo="${!repo_name}"
 	ver="${!ver_name}"
+
+	echo "--------------------------------"
+	echo "prepare deps: $dep tags/$ver"
+
+	if [ -d $dep ]; then
+		cd $dep
+		git checkout $ver
+		if [ $? -eq 0 ]; then
+			echo "$dep tags/$ver already exists"
+			continue
+		else
+			cd ..
+			echo "remove $dep that version != $ver"
+			rm -rf $dep
+		fi
+	fi
 	
 	echo "git clone --branch $ver --depth 1 $repo $dep"
 	git clone --branch $ver --depth 1 $repo $dep
 	status=$?
 	if [ $status -eq 0 ]; then
-		echo "Success download $dep"
+		echo "Success download $dep tags/$ver"
 	else
-		echo "Failed download $dep"
+		echo "Failed download $dep tags/$ver"
 		exit 1
 	fi
 done
-
-# move tmp deps to deps
-cd $origin
-mv $tmp_dep_dir $dep_dir
-echo "move $tmp_dep_dir -> $dep_dir"

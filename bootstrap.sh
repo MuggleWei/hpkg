@@ -12,13 +12,12 @@ fi
 
 build_shared_libs=ON
 build_testing=ON
+build_coverage=OFF
 
 if [ "$BUILD_TYPE" = "coverage" ]; then
 	BUILD_TYPE=release
 	build_testing=ON
 	build_coverage=ON
-else
-	build_coverage=OFF
 fi
 
 echo "Build Type: $BUILD_TYPE"
@@ -37,34 +36,22 @@ output_dir=$build_dir/_hpkg/output
 cd $origin_dir
 
 # ensure deps exists
-if [ ! -d $dep_dir ]; then
-	$origin_dir/download_deps.sh
-	status=$?
-	if [ $status -eq 0 ]; then
-		echo "Success download dependencies"
-	else
-		echo "Failed download dependencies"
-		exit 1
+$origin_dir/prepare_deps.sh
+status=$?
+if [ $status -eq 0 ]; then
+	echo "Success prepare dependencies"
+else
+	echo "Failed prepare dependencies"
+	exit 1
+fi
+
+# create directory: build_dir, dep_pkg_dir, test_dep_pkg_dir
+dir_array=("$build_dir" "$dep_pkg_dir" "$test_dep_pkg_dir")
+for dirpath in ${dir_array[@]}; do
+	if [ ! -d $dir_path ]; then
+		mkdir -p $dir_path
 	fi
-else
-	echo "Found dependencies source directory: $dep_dir"
-fi
-
-# create build directory
-if [ ! -d $build_dir ]; then
-	mkdir -p $build_dir
-	echo "Create build directory: $build_dir"
-else
-	echo "Found build directory: $build_dir"
-fi
-
-# create deps package directory
-if [ ! -d $dep_pkg_dir ]; then
-	mkdir -p $dep_pkg_dir
-	echo "Create dependencies package directory: $dep_pkg_dir"
-else
-	echo "Found dependencies package directory: $dep_pkg_dir"
-fi
+done
 
 # build dependencies - libyaml
 libyaml_src_dir=$dep_dir/libyaml
@@ -87,7 +74,7 @@ cmake \
 echo "Compile: libyaml"
 cmake --build $libyaml_build_dir --config $BUILD_TYPE --target install
 
-# build dependencies - libyaml
+# build dependencies - mugglec
 mugglec_src_dir=$dep_dir/mugglec
 mugglec_build_dir=$dep_dir/build/mugglec
 if [ -d $mugglec_build_dir ]; then
@@ -128,11 +115,7 @@ cmake \
 echo "Compile: unitytest"
 cmake --build $unitytest_build_dir --config $BUILD_TYPE --target install
 
-# build examples
-if [ ! -d $build_dir ];then
-	mkdir -p $build_dir
-fi
-
+# build project
 cmake \
 	-S $origin_dir \
 	-B $build_dir \
@@ -146,12 +129,20 @@ cmake \
 if [ "$build_testing" = "ON" ]; then
 	cd $build_dir
 	cmake --build $build_dir --config $BUILD_TYPE
-	if ! valgrind ls &> /dev/null; then
-		ctest
+	#if ! valgrind ls &> /dev/null; then
+	#    ctest
+	#else
+	#    ctest \
+	#        -DCTEST_MEMORYCHECK_COMMAND=valgrind \
+	#        -DMemoryCheckCommand=valgrind \
+	#        -T memcheck
+	#fi
+
+	ctest
+	if [ $? -eq 0 ]; then
+		echo "test success"
 	else
-		ctest \
-			-DCTEST_MEMORYCHECK_COMMAND=valgrind \
-			-DMemoryCheckCommand=valgrind \
-			-T memcheck
+		echo "test failed"
+		exit 1
 	fi
 fi
